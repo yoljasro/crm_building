@@ -13,6 +13,14 @@ let newObjects = 0;
 let newLeads = 0;
 let newOwners = 0;
 
+// Dublikatlarni tekshirish uchun Set (telefon + description)
+const seenObjects = new Set();
+for (const obj of db.objects) {
+  const existingOwner = db.owners.find((o: any) => o.id === obj.ownerId);
+  const existingPhone = existingOwner ? existingOwner.phone.replace(/\s+/g,'') : 'no_phone';
+  seenObjects.add(`${existingPhone}_${obj.description.trim()}`);
+}
+
 for (let i = 0; i < rawData.length; i++) {
   const msg = rawData[i];
   const text = msg.text || '';
@@ -37,6 +45,15 @@ for (let i = 0; i < rawData.length; i++) {
     }
     
     let phone = phoneMatch ? phoneMatch[0] : null;
+    
+    // Dublikat tekshiruvi: raqam + description bir xilligini aniqlash
+    const currentPhone = phone ? phone.replace(/\s+/g,'') : 'no_phone';
+    const uniqueKey = `${currentPhone}_${text.trim()}`;
+    
+    if (seenObjects.has(uniqueKey)) {
+      continue; // Raqam va description 100% bir xil bo'lsa, o'tkazib yuboramiz
+    }
+    seenObjects.add(uniqueKey);
     
     // Mulkdor (Owner) ni tekshirish yoki yaratish
     let ownerId = null;

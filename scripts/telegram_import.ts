@@ -29,11 +29,12 @@ const stringSession = new StringSession(""); // Yangi sessiya boshlash
   console.log("\n⏳ Chatlar ro'yxati yuklanmoqda...");
   const dialogs = await client.getDialogs();
   
-  const groupName = "Квартиры новая группа";
+  const groupName = "база Comfort_Home_Agency";
   const targetGroup = dialogs.find(d => d.title === groupName);
 
   if (!targetGroup) {
     console.log(`\n❌ "${groupName}" guruhi topilmadi! Guruh nomi to'g'riligini tekshiring.`);
+    console.log("mavjud guruhlar:", dialogs.slice(0, 10).map(d => d.title).join(", "), "...");
     process.exit(1);
   }
 
@@ -41,7 +42,7 @@ const stringSession = new StringSession(""); // Yangi sessiya boshlash
   
   // Barcha xabarlarni yuklab olish (Forumlarda hamma mavzular bitta guruhda bo'ladi)
   const messages = await client.getMessages(targetGroup.entity, {
-    limit: 5000, // Oxirgi 5000 ta xabarni olish
+    limit: 100000, // Barcha xabarlarni olish uchun maksimal limit
   });
 
   console.log(`\n📊 Jami ${messages.length} ta xabar yuklandi. Ular tahlil qilinmoqda...`);
