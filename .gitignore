@@ -8,6 +8,7 @@
 !.yarn/releases
 !.yarn/versions
 
+<<<<<<< HEAD
 
 public/images/
 public/photos/
@@ -16,6 +17,8 @@ uploads/
 *.jpeg
 *.png
 
+=======
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
 # testing
 /coverage
 

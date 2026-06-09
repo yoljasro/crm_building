@@ -44,7 +44,10 @@ interface RentalObject {
   repair: string;
   status: "bo'sh" | "band" | "bo'shaydi" | "arxiv";
   image: string;
+<<<<<<< HEAD
   images?: string[];
+=======
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
   description: string;
   ownerId: string;
   createdAt: string;
@@ -60,7 +63,10 @@ export default function PropertyDetailsPage() {
     const [copied, setCopied] = useState(false);
     const [isEditingStatus, setIsEditingStatus] = useState(false);
     const [newStatus, setNewStatus] = useState<"bo'sh" | "band" | "bo'shaydi" | "arxiv">("bo'sh");
+<<<<<<< HEAD
     const [selectedImage, setSelectedImage] = useState<string>('');
+=======
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
 
     const fetchDetails = async () => {
         setIsLoading(true);
@@ -72,7 +78,10 @@ export default function PropertyDetailsPage() {
                 if (foundObj) {
                     setObject(foundObj);
                     setNewStatus(foundObj.status);
+<<<<<<< HEAD
                     setSelectedImage(foundObj.image);
+=======
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
 
                     // Fetch owner details
                     const ownerRes = await fetch('/api/owners');
@@ -125,7 +134,11 @@ export default function PropertyDetailsPage() {
 📐 Maydoni (Площадь): ${object.area} m²
 🏢 Qavati: ${object.floor}
 🛠 Ta'miri (Ремонт): ${object.repair}
+<<<<<<< HEAD
 💵 Oylik to'lov (Цена): $${object?.price ? object.price.toLocaleString() : "N/A"} / oy
+=======
+💵 Oylik to'lov (Цена): $${object.price.toLocaleString()} / oy (start)
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
 `;
 
         const footer = `
@@ -151,7 +164,11 @@ Xususiyatlari:
 - Qavat: ${object.floor}
 - Ta'miri: ${object.repair}
 
+<<<<<<< HEAD
 Narxi: $${object?.price ? object.price.toLocaleString() : "N/A"} oyiga.
+=======
+Narxi: $${object.price.toLocaleString()} oyiga.
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
 
 Qo'shimcha ma'lumot:
 ${object.description || "Uylarning barcha sharoitlari bor. Jihozlangan va yashash uchun tayyor. Qo'shimcha savollar bo'lsa telefon qiling."}
@@ -163,7 +180,11 @@ Telefon: +998 90 123 45 67 (Operator)`;
         return `Ijara Obyekti: ${object.name}
         
 Joylashuvi: Toshkent shahar, ${object.district} tumani, ${object.address}
+<<<<<<< HEAD
 Ijara narxi: $${object?.price ? object.price.toLocaleString() : "N/A"} / oyiga
+=======
+Ijara narxi: $${object.price} / oyiga
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
 
 Kvartira parametrlari:
 - Xonalar: ${object.rooms} xonali
@@ -249,6 +270,7 @@ Telegram: @rent_crm_operator`;
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Images & Main Specifications */}
                 <div className="lg:col-span-2 space-y-8">
+<<<<<<< HEAD
                     {/* Image Hero & Gallery */}
                     <div className="space-y-4">
                         <div className="relative h-[420px] rounded-[32px] overflow-hidden shadow-2xl group bg-gray-100 border border-gray-100">
@@ -302,6 +324,41 @@ Telegram: @rent_crm_operator`;
                                 ))}
                             </div>
                         )}
+=======
+                    {/* Image Hero */}
+                    <div className="relative h-[420px] rounded-[32px] overflow-hidden shadow-2xl group bg-gray-100 border border-gray-100">
+                        <img
+                            src={object.image || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1000&auto=format&fit=crop"}
+                            alt={object.name}
+                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-103"
+                        />
+                        <div className="absolute top-6 left-6">
+                            <span className={cn(
+                                "px-4.5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 backdrop-blur-md",
+                                getStatusStyle(object.status)
+                            )}>
+                                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                {object.status === "bo'sh" ? "Bo'sh (Свободно)" :
+                                 object.status === "band" ? "Band (Занято)" :
+                                 object.status === "bo'shaydi" ? "Bo'shaydi (Освобождается)" : "Arxiv (Архив)"}
+                            </span>
+                        </div>
+                        <div className="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                            <div className="bg-black/50 backdrop-blur-md p-6 rounded-[24px] text-white max-w-lg border border-white/10 shadow-lg">
+                                <span className="text-[10px] bg-blue-600 px-2.5 py-1 rounded-lg uppercase font-black tracking-widest inline-block mb-2">
+                                    Ijara Obyekti
+                                </span>
+                                <h1 className="text-2xl md:text-3xl font-black font-outfit leading-tight">{object.name}</h1>
+                                <div className="flex items-center gap-2 text-white/80 text-xs mt-2">
+                                    <MapPin className="w-4 h-4 text-blue-400" />
+                                    {object.address}, {object.district} tumani
+                                </div>
+                            </div>
+                            <div className="bg-blue-600 p-5 rounded-[24px] text-white font-black text-2xl shadow-xl border border-blue-500 w-fit self-start md:self-end">
+                                ${object.price.toLocaleString()} <span className="text-xs font-normal">/ oy</span>
+                            </div>
+                        </div>
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
                     </div>
 
                     {/* Features Card */}
@@ -489,7 +546,11 @@ Telegram: @rent_crm_operator`;
                             </div>
                             <div className="relative">
                                 <div className="absolute -left-[26px] top-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
+<<<<<<< HEAD
                                 <p className="font-bold text-gray-900">Narx yangilandi: ${object?.price ? object.price.toLocaleString() : "N/A"}</p>
+=======
+                                <p className="font-bold text-gray-900">Narx yangilandi: ${object.price.toLocaleString()}</p>
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
                                 <p className="text-[10px] text-gray-400 mt-0.5">Avtomatik sinxronizatsiya</p>
                             </div>
                         </div>

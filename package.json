@@ -1,11 +1,16 @@
 {
+<<<<<<< HEAD
   "type": "module",
+=======
+  "name": "my-crm",
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+<<<<<<< HEAD
     "lint": "eslint",
     "fetch": "ts-node scripts/fetch_group.ts",
     "parse": "ts-node scripts/parse_messages.ts",
@@ -24,6 +29,15 @@
     "next": "16.2.6",
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
+=======
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "input": "^1.0.1",
+    "lucide-react": "^1.16.0",
+    "next": "16.2.6",
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tailwind-merge": "^3.6.0",
@@ -38,7 +52,10 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+<<<<<<< HEAD
     "ts-node": "^10.9.2",
+=======
+>>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
     "typescript": "^5"
   }
 }
