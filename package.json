@@ -1,0 +1,44 @@
+{
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "fetch": "ts-node scripts/fetch_group.ts",
+    "parse": "ts-node scripts/parse_messages.ts",
+    "download": "ts-node scripts/download_images.ts",
+    "reprocess": "ts-node scripts/reprocess_all.ts",
+    "report": "node scripts/generate_report.js",
+    "import": "ts-node scripts/import_from_json.ts",
+    "test": "jest"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
+    "input": "^1.0.1",
+    "lucide-react": "^1.16.0",
+    "next": "16.2.6",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tailwind-merge": "^3.6.0",
+    "telegram": "^2.26.22",
+    "tsx": "^4.22.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  }
+}
