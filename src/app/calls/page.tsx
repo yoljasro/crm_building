@@ -34,9 +34,10 @@ interface CallLog {
   ownerId?: string;
   operator: string;
   duration: number; // in seconds
-  status: "javob_berildi" | "javobsiz" | "band";
+  status: "javob_berildi" | "javobsiz" | "band" | "xato";
   notes: string;
   date: string;
+  audioUrl?: string;
 }
 
 export default function CallsPage() {
@@ -490,8 +491,13 @@ export default function CallsPage() {
                                                     {statusInfo.label}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-xs text-gray-600 max-w-xs truncate" title={call.notes}>
-                                                {call.notes}
+                                            <td className="px-6 py-4 text-xs text-gray-600 max-w-xs">
+                                                <div className="truncate" title={call.notes}>{call.notes}</div>
+                                                {call.audioUrl && (
+                                                    <div className="mt-2">
+                                                        <audio controls src={call.audioUrl} className="h-8 w-full max-w-[200px]" />
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <button

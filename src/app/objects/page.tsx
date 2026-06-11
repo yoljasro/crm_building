@@ -18,12 +18,13 @@ import {
     CheckCircle2,
     Clock,
     AlertCircle,
-    Archive
+    Archive,
+    ChevronLeft,
+    ChevronRight,
+    Share2,
+    Check,
+    PhoneCall
 } from 'lucide-react';
-<<<<<<< HEAD
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-=======
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
 import { cn } from '@/lib/utils';
 
 // Types from our db schema
@@ -45,6 +46,7 @@ interface RentalObject {
   repair: string;
   status: "bo'sh" | "band" | "bo'shaydi" | "arxiv";
   image: string;
+  images?: string[];
   description: string;
   ownerId: string;
   createdAt: string;
@@ -55,28 +57,24 @@ const districts = ["Barchasi", "Mirabad", "Yakkasaray", "Tashkent City", "Shaykh
 export default function ObjectsPage() {
     // API data states
     const [objects, setObjects] = useState<RentalObject[]>([]);
-<<<<<<< HEAD
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 20;
+
     // Image modal state
-const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-const [modalImages, setModalImages] = useState<string[]>([]);
-const [modalIndex, setModalIndex] = useState(0);
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [modalImages, setModalImages] = useState<string[]>([]);
+    const [modalIndex, setModalIndex] = useState(0);
 
-// paginatedObjects moved below after filteredObjects
-// Reset page when filters change (moved below filter state declarations)
-// Open image modal with given image URLs
-const openModal = (imgs: string[]) => {
-  setModalImages(imgs);
-  setModalIndex(0);
-  setIsImageModalOpen(true);
-};
+    // Open image modal with given image URLs
+    const openModal = (imgs: string[]) => {
+      setModalImages(imgs);
+      setModalIndex(0);
+      setIsImageModalOpen(true);
+    };
 
-const [owners, setOwners] = useState<Owner[]>([]);
-=======
     const [owners, setOwners] = useState<Owner[]>([]);
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     // Filter states
     const [selectedDistrict, setSelectedDistrict] = useState("Barchasi");
@@ -90,12 +88,9 @@ const [owners, setOwners] = useState<Owner[]>([]);
         areaMax: "",
         status: "Barchasi"
     });
-<<<<<<< HEAD
+
     // Reset page when filters change
     useEffect(() => { setCurrentPage(1); }, [selectedDistrict, searchQuery, appliedFilters]);
-
-=======
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
 
     // Form inputs for modal filters
     const [filterForm, setFilterForm] = useState({
@@ -155,7 +150,6 @@ const [owners, setOwners] = useState<Owner[]>([]);
 
     // Filter logic
     const filteredObjects = objects.filter(obj => {
-<<<<<<< HEAD
         // District filter - handles case-insensitivity and substring/English-Uzbek variants
         let matchesDistrict = false;
         if (selectedDistrict === "Barchasi") {
@@ -189,14 +183,6 @@ const [owners, setOwners] = useState<Owner[]>([]);
             (obj.address?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
             (obj.district?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
             (obj.description?.toLowerCase() ?? "").includes(searchQuery.toLowerCase());
-=======
-        // District filter
-        const matchesDistrict = selectedDistrict === "Barchasi" || obj.district === selectedDistrict;
-
-        // Search query filter (name or address)
-        const matchesSearch = obj.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            obj.address.toLowerCase().includes(searchQuery.toLowerCase());
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
 
         // Price Min filter
         const matchesPriceMin = appliedFilters.priceMin === "" || obj.price >= Number(appliedFilters.priceMin);
@@ -218,10 +204,8 @@ const [owners, setOwners] = useState<Owner[]>([]);
 
         return matchesDistrict && matchesSearch && matchesPriceMin && matchesPriceMax && matchesRooms && matchesAreaMin && matchesAreaMax && matchesStatus;
     });
-<<<<<<< HEAD
-const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-=======
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
+
+    const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     // Add new object submission
     const handleAddObject = async (e: React.FormEvent) => {
@@ -288,6 +272,42 @@ const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, cur
         setSearchQuery("");
     };
 
+    // Selection helpers
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev =>
+            prev.includes(id)
+                ? prev.filter(item => item !== id)
+                : [...prev, id]
+        );
+    };
+
+    const handleShareTelegram = () => {
+        if (selectedIds.length === 0) return;
+
+        const selectedObjects = objects.filter(o => selectedIds.includes(o.id));
+        
+        let text = `🏢 *Ijara Obyektlari bo'yicha takliflar:*\n\n`;
+        
+        selectedObjects.forEach((obj, idx) => {
+            const statusDetails = getStatusDetails(obj.status);
+            text += `${idx + 1}️⃣ *${obj.name}*\n`;
+            text += `📍 Manzil: ${obj.address}, ${obj.district}\n`;
+            text += `💵 Ijara narxi: $${(obj.price ?? 0).toLocaleString()} / oy\n`;
+            text += `📐 Maydoni: ${obj.area} m² | 🚪 Xonalar: ${obj.rooms} xona | 🏢 Qavati: ${obj.floor}\n`;
+            text += `🔧 Ta'mirlanishi: ${obj.repair}\n`;
+            text += `ℹ️ Status: ${statusDetails.label}\n`;
+            if (obj.description) {
+                const desc = obj.description.length > 150 ? obj.description.substring(0, 150) + "..." : obj.description;
+                text += `📝 Tavsif: ${desc}\n`;
+            }
+            text += `🔗 Batafsil ma'lumot: ${window.location.origin}/objects/${obj.id}\n\n`;
+        });
+
+        // Set url parameter to window.location.origin to prevent redirecting to telegram.org
+        const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(text)}`;
+        window.open(shareUrl, '_blank');
+    };
+
     // Status Helper
     const getStatusDetails = (status: "bo'sh" | "band" | "bo'shaydi" | "arxiv") => {
         switch (status) {
@@ -319,7 +339,6 @@ const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, cur
                     dotClass: "bg-slate-500",
                     icon: Archive
                 };
-<<<<<<< HEAD
             default:
                 return {
                     label: status ?? "Noma'lum",
@@ -327,17 +346,41 @@ const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, cur
                     dotClass: "bg-gray-400",
                     icon: Archive
                 };
-=======
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
+        }
+    };
+
+    const handleCall = async (ownerId: string) => {
+        const owner = owners.find(o => o.id === ownerId);
+        if (!owner) return;
+        
+        const managerId = 12; // Example fixed manager ID for demo
+        if (!confirm(`${owner.name} (${owner.phone}) raqamiga qo'ng'iroq yuborilsinmi?`)) return;
+
+        try {
+            const res = await fetch('/api/agent/call', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    managerId,
+                    phone: owner.phone,
+                    targetId: owner.id,
+                    targetModel: 'owner'
+                })
+            });
+            const json = await res.json();
+            if (json.success) {
+                alert("Qo'ng'iroq buyrug'i Android Agent'ga yuborildi!");
+            } else {
+                alert("Xatolik: " + json.error);
+            }
+        } catch (error) {
+            console.error("Qo'ng'iroq xatosi:", error);
+            alert("Tarmoq xatosi!");
         }
     };
 
     return (
-<<<<<<< HEAD
-        <div className="space-y-8 pb-12 min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 text-white">
-=======
         <div className="space-y-8 pb-12">
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
             {/* ADD OBJECT MODAL */}
             {isAddModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
@@ -467,7 +510,7 @@ const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, cur
                                         onChange={(e) => setAddObjectForm(prev => ({ ...prev, status: e.target.value as any }))}
                                     >
                                         <option value="bo'sh">Bo'sh (Свободно)</option>
-                                        <option value="band">Band (Занято)</option>
+                                        <option value="band">Band (Заняto)</option>
                                         <option value="bo'shaydi">Bo'shaydi (Освобождается)</option>
                                         <option value="arxiv">Arxiv (Архив)</option>
                                     </select>
@@ -614,7 +657,7 @@ const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, cur
                                     >
                                         <option value="Barchasi">Barchasi</option>
                                         <option value="bo'sh">Bo'sh (Свободно)</option>
-                                        <option value="band">Band (Занято)</option>
+                                        <option value="band">Band (Заняto)</option>
                                         <option value="bo'shaydi">Bo'shaydi (Освобождается)</option>
                                         <option value="arxiv">Arxiv (Архив)</option>
                                     </select>
@@ -694,7 +737,30 @@ const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, cur
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                        {filteredObjects.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (selectedIds.length === filteredObjects.length) {
+                                        setSelectedIds([]);
+                                    } else {
+                                        setSelectedIds(filteredObjects.map(o => o.id));
+                                    }
+                                }}
+                                className={cn(
+                                    "flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold border rounded-2xl transition-all w-full md:w-auto cursor-pointer",
+                                    selectedIds.length > 0
+                                        ? "bg-blue-50 border-blue-100 text-blue-600 hover:bg-blue-100"
+                                        : "bg-gray-50 border-gray-100 text-gray-600 hover:bg-gray-100"
+                                )}
+                            >
+                                <Share2 className="w-4 h-4 text-blue-600" />
+                                {selectedIds.length === filteredObjects.length
+                                    ? "Tanlovni bekor qilish"
+                                    : "Barchasini tanlash"}
+                            </button>
+                        )}
                         <button
                             onClick={() => setIsFilterModalOpen(true)}
                             className="flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold text-gray-600 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-gray-100 transition-colors w-full md:w-auto"
@@ -718,23 +784,38 @@ const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, cur
                 </div>
             </div>
 
-<<<<<<< HEAD
             {/* OBJECTS TABLE */}
-=======
-            {/* RESULTS GRID */}
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
             {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-20">
                     <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
                     <p className="text-gray-500 text-sm font-medium">Obyektlar yuklanmoqda...</p>
                 </div>
             ) : (
-<<<<<<< HEAD
                 <div className="glass-card bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
                                 <tr className="text-left text-xs uppercase tracking-wider text-gray-400 bg-gray-50/50 border-b border-gray-100">
+                                    <th className="px-4 py-4 font-bold w-12 text-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={paginatedObjects.length > 0 && paginatedObjects.every(o => selectedIds.includes(o.id))}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    const newSelected = [...selectedIds];
+                                                    paginatedObjects.forEach(o => {
+                                                        if (!newSelected.includes(o.id)) {
+                                                            newSelected.push(o.id);
+                                                        }
+                                                    });
+                                                    setSelectedIds(newSelected);
+                                                } else {
+                                                    setSelectedIds(selectedIds.filter(id => !paginatedObjects.map(o => o.id).includes(id)));
+                                                }
+                                            }}
+                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                        />
+                                    </th>
                                     <th className="px-6 py-4 font-bold">Rasmlar</th>
                                     <th className="px-6 py-4 font-bold">Obyekt nomi / Manzili</th>
                                     <th className="px-6 py-4 font-bold">Narxi</th>
@@ -747,16 +828,30 @@ const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, cur
                             <tbody className="divide-y divide-gray-50">
                                 {paginatedObjects.map(object => {
                                     const statusInfo = getStatusDetails(object.status);
+                                    const isSelected = selectedIds.includes(object.id);
                                     return (
-                                        <tr key={object.id} className="group hover:bg-gray-50/30 transition-colors">
+                                        <tr key={object.id} className={cn("group hover:bg-gray-50/30 transition-colors", isSelected && "bg-blue-50/10")}>
+                                            <td className="px-4 py-4 text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => toggleSelect(object.id)}
+                                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                                />
+                                            </td>
                                             <td className="px-6 py-4">
-                                                <img src={object.images?.[0] ?? object.image} alt="" className="w-12 h-12 object-cover rounded cursor-pointer" onClick={() => openModal(object.images?.length ? object.images : [object.image])} />
+                                                <img 
+                                                    src={object.images?.[0] ?? object.image ?? "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1000&auto=format&fit=crop"} 
+                                                    alt="" 
+                                                    className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity" 
+                                                    onClick={() => openModal(object.images?.length ? object.images : [object.image ?? "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1000&auto=format&fit=crop"])} 
+                                                />
                                             </td>
                                             <td className="px-6 py-4">
                                                 <Link href={`/objects/${object.id}`} className="flex flex-col hover:text-blue-600 transition-colors">
                                                     <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 font-outfit line-clamp-1">{object.name}</span>
                                                     <span className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                                                        <MapPin className="w-3 h-3" />
+                                                        <MapPin className="w-3 h-3 text-blue-500" />
                                                         {object.address}, {object.district}
                                                     </span>
                                                 </Link>
@@ -778,43 +873,29 @@ const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, cur
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">
+                                                    <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-[10px] font-bold text-blue-600">
                                                         <User className="w-4 h-4" />
                                                     </div>
-                                                    <span className="text-sm text-gray-700 font-bold whitespace-nowrap">
+                                                    <span className="text-sm text-gray-700 font-bold whitespace-nowrap mr-2">
                                                         {owners.find(o => o.id === object.ownerId)?.name || "Mulkdor"}
                                                     </span>
+                                                    <button
+                                                        onClick={() => handleCall(object.ownerId)}
+                                                        className="p-1.5 text-white bg-green-500 hover:bg-green-600 rounded-lg transition-all shadow-md shadow-green-500/20 opacity-0 group-hover:opacity-100"
+                                                        title="Qo'ng'iroq (Agent orqali)"
+                                                    >
+                                                        <PhoneCall className="w-3.5 h-3.5" />
+                                                    </button>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={cn(
                                                     "px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5 whitespace-nowrap",
-=======
-                <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filteredObjects.map(object => {
-                            const statusInfo = getStatusDetails(object.status);
-                            const StatusIcon = statusInfo.icon;
-                            return (
-                                <Link key={object.id} href={`/objects/${object.id}`} className="block group">
-                                    <div className="glass-card bg-white border border-gray-100 shadow-sm group hover:shadow-xl rounded-3xl overflow-hidden h-full flex flex-col transition-all duration-300">
-                                        <div className="relative h-56 overflow-hidden bg-gray-100">
-                                            <img
-                                                src={object.image || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1000&auto=format&fit=crop"}
-                                                alt={object.name}
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                            />
-                                            {/* Status Badge */}
-                                            <div className="absolute top-4 left-4">
-                                                <span className={cn(
-                                                    "px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 backdrop-blur-md",
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
                                                     statusInfo.badgeClass
                                                 )}>
                                                     <span className={cn("w-1.5 h-1.5 rounded-full", statusInfo.dotClass)} />
                                                     {statusInfo.label}
                                                 </span>
-<<<<<<< HEAD
                                             </td>
                                         </tr>
                                     );
@@ -825,69 +906,6 @@ const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, cur
                     
                     {filteredObjects.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-20 bg-white border-t border-dashed border-gray-200">
-=======
-                                            </div>
-                                            {/* Price Badge */}
-                                            <div className="absolute bottom-4 left-4 right-4">
-                                                <span className="px-3.5 py-2 rounded-xl bg-black/60 backdrop-blur-md text-white font-black text-base shadow-sm">
-                                                    ${object.price.toLocaleString()} / oy
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1 font-outfit">
-                                                    {object.name}
-                                                </h3>
-                                                <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1">
-                                                    <MapPin className="w-3.5 h-3.5 text-blue-500" />
-                                                    {object.address}, {object.district}
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-3 py-1">
-                                                <div className="flex items-center gap-2.5 p-2.5 bg-gray-50/50 border border-gray-100 rounded-xl">
-                                                    <Maximize2 className="w-4 h-4 text-blue-500" />
-                                                    <span className="text-xs font-bold text-gray-700">{object.area} m²</span>
-                                                </div>
-                                                <div className="flex items-center gap-2.5 p-2.5 bg-gray-50/50 border border-gray-100 rounded-xl">
-                                                    <BedDouble className="w-4 h-4 text-blue-500" />
-                                                    <span className="text-xs font-bold text-gray-700">{object.rooms} xona</span>
-                                                </div>
-                                                <div className="flex items-center gap-2.5 p-2.5 bg-gray-50/50 border border-gray-100 rounded-xl">
-                                                    <Layers className="w-4 h-4 text-blue-500" />
-                                                    <span className="text-xs font-bold text-gray-700">{object.floor} qavat</span>
-                                                </div>
-                                                <div className="flex items-center gap-2.5 p-2.5 bg-gray-50/50 border border-gray-100 rounded-xl">
-                                                    <Hammer className="w-4 h-4 text-blue-500" />
-                                                    <span className="text-xs font-bold text-gray-700 line-clamp-1">{object.repair}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-xs font-bold text-blue-600">
-                                                        <User className="w-4 h-4" />
-                                                    </div>
-                                                    <span className="text-xs text-gray-500 font-bold">
-                                                        {owners.find(o => o.id === object.ownerId)?.name || "Mulkdor"}
-                                                    </span>
-                                                </div>
-                                                <span className="text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
-                                                    Batafsil &rarr;
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Link>
-                            );
-                        })}
-                    </div>
-
-                    {filteredObjects.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
                             <Building2 className="w-12 h-12 text-gray-300 mb-3" />
                             <p className="text-gray-500 font-bold tracking-tight text-sm">Ushbu filtrlar bo'yicha hech qanday obyekt topilmadi</p>
                             <button
@@ -898,62 +916,106 @@ const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, cur
                             </button>
                         </div>
                     )}
-<<<<<<< HEAD
                     
                     <div className="p-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 font-bold">
                         <span>Jami {filteredObjects.length} ta obyekt ko'rsatilmoqda</span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-4">
                             <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black mr-2">Rent CRM</span>
-                                            {/* Pagination Controls */}
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <button onClick={() => setCurrentPage(p => Math.max(p-1, 1))} disabled={currentPage===1} className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 disabled:opacity-50">Prev</button>
-                                                <span className="text-sm">{currentPage} / {Math.ceil(filteredObjects.length / pageSize)}</span>
-                                                <button onClick={() => setCurrentPage(p => Math.min(p+1, Math.ceil(filteredObjects.length / pageSize)))} disabled={currentPage===Math.ceil(filteredObjects.length / pageSize)} className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 disabled:opacity-50">Next</button>
-                                            </div>
+                            {/* Pagination Controls */}
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => setCurrentPage(p => Math.max(p-1, 1))} 
+                                    disabled={currentPage===1} 
+                                    className="px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-700 disabled:opacity-50 hover:bg-gray-50 transition-colors disabled:hover:bg-white flex items-center gap-1 cursor-pointer"
+                                >
+                                    <ChevronLeft className="w-3.5 h-3.5" />
+                                    Oldingi
+                                </button>
+                                <span className="text-sm px-2 text-gray-700">{currentPage} / {Math.max(1, Math.ceil(filteredObjects.length / pageSize))}</span>
+                                <button 
+                                    onClick={() => setCurrentPage(p => Math.min(p+1, Math.ceil(filteredObjects.length / pageSize)))} 
+                                    disabled={currentPage===Math.ceil(filteredObjects.length / pageSize) || filteredObjects.length === 0} 
+                                    className="px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-700 disabled:opacity-50 hover:bg-gray-50 transition-colors disabled:hover:bg-white flex items-center gap-1 cursor-pointer"
+                                >
+                                    Keyingi
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
                         </div>
                     </div>
-                {/* Image Carousel Modal */}
-{isImageModalOpen && (
-  <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-    <div className="relative max-w-3xl w-full bg-white rounded-2xl shadow-xl overflow-hidden">
-      <button
-        onClick={() => setIsImageModalOpen(false)}
-        className="absolute top-3 right-3 text-gray-600 hover:text-gray-800"
-      >
-        <X className="w-5 h-5" />
-      </button>
-      <img
-        src={modalImages[modalIndex]}
-        alt={`Image ${modalIndex + 1}`}
-        className="w-full h-auto max-h-[80vh] object-contain"
-      />
-      {modalImages.length > 1 && (
-        <>
-          <button
-            onClick={() =>
-              setModalIndex((i) => (i === 0 ? modalImages.length - 1 : i - 1))
-            }
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white"
-          >
-            <ChevronLeft className="w-6 h-6 text-gray-700" />
-          </button>
-          <button
-            onClick={() =>
-              setModalIndex((i) => (i === modalImages.length - 1 ? 0 : i + 1))
-            }
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white"
-          >
-            <ChevronRight className="w-6 h-6 text-gray-700" />
-          </button>
-        </>
-      )}
-    </div>
-  </div>
-)}
-</div>
-=======
-                </>
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
+                </div>
+            )}
+            
+            {/* FLOATING TELEGRAM SHARE BAR */}
+            {selectedIds.length > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-gray-100 shadow-2xl rounded-3xl px-6 py-4 flex items-center justify-between gap-6 z-[90] animate-in slide-in-from-bottom-4 duration-300 max-w-lg w-[calc(100%-2rem)]">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tanlangan</span>
+                        <span className="text-sm font-black text-gray-900">{selectedIds.length} ta obyekt</span>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={handleShareTelegram}
+                            className="flex items-center gap-2 px-5 py-2.5 text-xs font-black text-white bg-blue-600 rounded-2xl hover:bg-blue-700 transition-all shadow-md shadow-blue-600/25 active:scale-95 cursor-pointer"
+                        >
+                            <Send className="w-4 h-4" />
+                            Telegramda ulashish
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedIds([])}
+                            className="p-2.5 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all cursor-pointer"
+                            title="Tanlovni bekor qilish"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Image Carousel Modal */}
+            {isImageModalOpen && (
+              <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                <div className="relative max-w-3xl w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+                  <button
+                    onClick={() => setIsImageModalOpen(false)}
+                    className="absolute top-3 right-3 text-gray-600 hover:text-gray-800 z-10 p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                  <div className="flex items-center justify-center bg-gray-100 p-8 min-h-[300px]">
+                    <img
+                      src={modalImages[modalIndex] ?? "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1000&auto=format&fit=crop"}
+                      alt={`Image ${modalIndex + 1}`}
+                      className="max-w-full h-auto max-h-[70vh] object-contain rounded"
+                    />
+                  </div>
+                  {modalImages.length > 1 && (
+                    <>
+                      <button
+                        onClick={() =>
+                          setModalIndex((i) => (i === 0 ? modalImages.length - 1 : i - 1))
+                        }
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2.5 hover:bg-white shadow transition-all active:scale-90"
+                      >
+                        <ChevronLeft className="w-5 h-5 text-gray-700" />
+                      </button>
+                      <button
+                        onClick={() =>
+                          setModalIndex((i) => (i === modalImages.length - 1 ? 0 : i + 1))
+                        }
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2.5 hover:bg-white shadow transition-all active:scale-90"
+                      >
+                        <ChevronRight className="w-5 h-5 text-gray-700" />
+                      </button>
+                    </>
+                  )}
+                  <div className="p-3 text-center text-xs text-gray-500 font-bold border-t border-gray-100 bg-white">
+                      Rasm {modalIndex + 1} / {modalImages.length}
+                  </div>
+                </div>
+              </div>
             )}
         </div>
     );

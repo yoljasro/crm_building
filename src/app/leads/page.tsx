@@ -14,7 +14,8 @@ import {
     X,
     User,
     Trash2,
-    CheckCircle2
+    CheckCircle2,
+    PhoneCall
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -156,6 +157,33 @@ export default function LeadsPage() {
             }
         } catch (error) {
             console.error("Lid statusini o'zgartirishda xatolik:", error);
+        }
+    };
+
+    const handleCall = async (targetId: string, phone: string, name: string) => {
+        const managerId = 12; // Example fixed manager ID for demo
+        if (!confirm(`${name} (${phone}) raqamiga qo'ng'iroq yuborilsinmi?`)) return;
+
+        try {
+            const res = await fetch('/api/agent/call', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    managerId,
+                    phone,
+                    targetId,
+                    targetModel: 'lead'
+                })
+            });
+            const json = await res.json();
+            if (json.success) {
+                alert("Qo'ng'iroq buyrug'i Android Agent'ga yuborildi!");
+            } else {
+                alert("Xatolik: " + json.error);
+            }
+        } catch (error) {
+            console.error("Qo'ng'iroq xatosi:", error);
+            alert("Tarmoq xatosi!");
         }
     };
 
@@ -423,11 +451,11 @@ export default function LeadsPage() {
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
-                                                        onClick={() => alert(`Qo'ng'iroq qilinmoqda: ${lead.phone}`)}
-                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                                                        title="Qo'ng'iroq"
+                                                        onClick={() => handleCall(lead.id, lead.phone, lead.name)}
+                                                        className="p-2 text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all shadow-lg shadow-green-500/20"
+                                                        title="Qo'ng'iroq (Agent orqali)"
                                                     >
-                                                        <Phone className="w-4 h-4" />
+                                                        <PhoneCall className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => window.open(`https://t.me/${lead.phone.replace(/[\s+]/g, '')}`, '_blank')}

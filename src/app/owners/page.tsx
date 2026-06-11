@@ -12,7 +12,8 @@ import {
     Building2,
     X,
     Trash2,
-    MessageSquare
+    MessageSquare,
+    PhoneCall
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -126,6 +127,33 @@ export default function OwnersPage() {
             }
         } catch (error) {
             console.error("Mulkdorni o'chirishda xatolik:", error);
+        }
+    };
+
+    const handleCall = async (targetId: string, phone: string, name: string) => {
+        const managerId = 12; // Example fixed manager ID for demo
+        if (!confirm(`${name} (${phone}) raqamiga qo'ng'iroq yuborilsinmi?`)) return;
+
+        try {
+            const res = await fetch('/api/agent/call', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    managerId,
+                    phone,
+                    targetId,
+                    targetModel: 'owner'
+                })
+            });
+            const json = await res.json();
+            if (json.success) {
+                alert("Qo'ng'iroq buyrug'i Android Agent'ga yuborildi!");
+            } else {
+                alert("Xatolik: " + json.error);
+            }
+        } catch (error) {
+            console.error("Qo'ng'iroq xatosi:", error);
+            alert("Tarmoq xatosi!");
         }
     };
 
@@ -280,13 +308,22 @@ export default function OwnersPage() {
                                                 </span>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => handleDelete(owner.id)}
-                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                                            title="O'chirish"
-                                        >
-                                            <Trash2 className="w-4.5 h-4.5" />
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleCall(owner.id, owner.phone, owner.name)}
+                                                className="p-2 text-white bg-green-500 hover:bg-green-600 rounded-xl transition-colors shadow-lg shadow-green-500/20"
+                                                title="Qo'ng'iroq qilish (Agent orqali)"
+                                            >
+                                                <PhoneCall className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(owner.id)}
+                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                                                title="O'chirish"
+                                            >
+                                                <Trash2 className="w-4.5 h-4.5" />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2 pt-2 border-t border-gray-50 text-sm">

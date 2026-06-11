@@ -53,10 +53,23 @@ export interface CallLog {
   leadId?: string;
   ownerId?: string;
   operator: string;
+  managerId?: number; // Optional reference to Android Agent ID
   duration: number; // in seconds
-  status: "javob_berildi" | "javobsiz" | "band";
+  status: "javob_berildi" | "javobsiz" | "band" | "xato";
   notes: string;
   date: string;
+  audioUrl?: string; // Link to the recorded audio file
+}
+
+export interface AgentQueue {
+  id: string;
+  managerId: number;
+  phone: string;
+  type: "call";
+  status: "pending" | "processing" | "completed";
+  targetId?: string; // ID of lead/owner to link it back
+  targetModel?: "lead" | "owner"; // Whether it's a lead or owner
+  createdAt: string;
 }
 
 export interface Task {
@@ -75,6 +88,7 @@ interface DatabaseSchema {
   leads: Lead[];
   calls: CallLog[];
   tasks: Task[];
+  agentQueue: AgentQueue[];
 }
 
 const initialData: DatabaseSchema = {
@@ -296,7 +310,8 @@ const initialData: DatabaseSchema = {
       operator: "Sevinch",
       date: "2026-05-24"
     }
-  ]
+  ],
+  agentQueue: []
 };
 
 // Initialize DB if not exists
