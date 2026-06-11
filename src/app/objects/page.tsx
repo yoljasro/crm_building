@@ -23,7 +23,8 @@ import {
     ChevronRight,
     Share2,
     Check,
-    PhoneCall
+    PhoneCall,
+    Send
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

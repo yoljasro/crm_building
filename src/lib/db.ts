@@ -26,10 +26,7 @@ export interface RentalObject {
   repair: string; // e.g. "Euro", "Lux", "Yangi ta'mir"
   status: "bo'sh" | "band" | "bo'shaydi" | "arxiv";
   image: string;
-<<<<<<< HEAD
-  images: string[]; // added array of image URLs
-=======
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
+  images?: string[]; // added array of image URLs
   description: string;
   ownerId: string;
   createdAt: string;
@@ -134,10 +131,7 @@ const initialData: DatabaseSchema = {
       repair: "Yangi ta'mir",
       status: "bo'sh",
       image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1000&auto=format&fit=crop",
-<<<<<<< HEAD
       images: [],
-=======
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
       description: "Premium klassdagi turar-joy majmuasi. Mirabad Avenue - bu poytaxt markazidagi eng nufuzli manzillardan biri. Xonadon yuqori sifatli materiallar bilan ta'mirlangan, panoramik derazalar va keng balkon mavjud. Barcha sharoitlari bor.",
       ownerId: "1",
       createdAt: "2026-05-15T12:30:00.000Z"
@@ -154,10 +148,7 @@ const initialData: DatabaseSchema = {
       repair: "Dizaynerlik",
       status: "band",
       image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1000&auto=format&fit=crop",
-<<<<<<< HEAD
       images: [],
-=======
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
       description: "Tashkent City markazida zamonaviy xonadon. Ajoyib shahar manzarasi, rivojlangan infratuzilma, 24/7 qo'riqlash xizmati va yuqori darajadagi xavfsizlik.",
       ownerId: "2",
       createdAt: "2026-05-20T10:00:00.000Z"
@@ -174,10 +165,7 @@ const initialData: DatabaseSchema = {
       repair: "Lux",
       status: "bo'shaydi",
       image: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=1000&auto=format&fit=crop",
-<<<<<<< HEAD
       images: [],
-=======
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
       description: "Yakkasaray tumanidagi hashamatli yevro uslubidagi xonadon. Barcha qulay sharoitlarga ega, yangi import qilingan mebel va maishiy texnikalar bilan jihozlangan. Oila uchun juda mos.",
       ownerId: "3",
       createdAt: "2026-05-20T11:15:00.000Z"
@@ -194,10 +182,7 @@ const initialData: DatabaseSchema = {
       repair: "Euro",
       status: "arxiv",
       image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1000&auto=format&fit=crop",
-<<<<<<< HEAD
       images: [],
-=======
->>>>>>> b1444f02885688ec38ee29a67dc2135962cec802
       description: "Yunusobod tumanida shinamgina 1 xonali studio kvartira. Metroga yaqin, talabalar yoki yosh oila uchun juda qulay va arzon variant.",
       ownerId: "2",
       createdAt: "2026-05-22T14:40:00.000Z"

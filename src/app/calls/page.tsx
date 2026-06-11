@@ -180,7 +180,7 @@ export default function CallsPage() {
     };
 
     // Status Styling Helper
-    const getStatusDetails = (status: "javob_berildi" | "javobsiz" | "band") => {
+    const getStatusDetails = (status: "javob_berildi" | "javobsiz" | "band" | "xato") => {
         switch (status) {
             case "javob_berildi":
                 return {
@@ -199,6 +199,12 @@ export default function CallsPage() {
                     label: "Band",
                     badgeClass: "bg-amber-50 text-amber-600 border border-amber-100",
                     icon: PhoneForwarded
+                };
+            case "xato":
+                return {
+                    label: "Xato",
+                    badgeClass: "bg-rose-50 text-rose-600 border border-rose-100",
+                    icon: PhoneMissed
                 };
         }
     };
