@@ -50,7 +50,7 @@ export default function ReportsPage() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const objRes = await fetch('/api/objects');
+            const objRes = await fetch('/api/objects?fields=status');
             const objJson = await objRes.json();
             if (objJson.success) setObjects(objJson.data);
 

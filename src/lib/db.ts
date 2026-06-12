@@ -310,12 +310,22 @@ export function initDB() {
   }
 }
 
+let cachedDB: DatabaseSchema | null = null;
+let lastModifiedTime: number = 0;
+
 // Read database
 export function readDB(): DatabaseSchema {
   initDB();
   try {
+    const stats = fs.statSync(DB_FILE);
+    const mtime = stats.mtimeMs;
+    if (cachedDB && mtime === lastModifiedTime) {
+      return cachedDB;
+    }
     const data = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(data);
+    cachedDB = JSON.parse(data);
+    lastModifiedTime = mtime;
+    return cachedDB!;
   } catch (error) {
     console.error("DB reading error, using initialData:", error);
     return initialData;
@@ -326,7 +336,15 @@ export function readDB(): DatabaseSchema {
 export function writeDB(data: DatabaseSchema) {
   initDB();
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  cachedDB = data;
+  try {
+    const stats = fs.statSync(DB_FILE);
+    lastModifiedTime = stats.mtimeMs;
+  } catch (e) {
+    lastModifiedTime = Date.now();
+  }
 }
 
 // Auto init on import
 initDB();
+

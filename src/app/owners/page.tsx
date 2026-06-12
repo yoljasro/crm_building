@@ -25,19 +25,12 @@ interface Owner {
   telegram: string;
   notes: string;
   createdAt: string;
-}
-
-interface RentalObject {
-  id: string;
-  name: string;
-  ownerId: string;
-  price: number;
-  status: string;
+  objectsCount?: number;
+  objects?: { id: string; name: string; price: number }[];
 }
 
 export default function OwnersPage() {
     const [owners, setOwners] = useState<Owner[]>([]);
-    const [objects, setObjects] = useState<RentalObject[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -58,12 +51,6 @@ export default function OwnersPage() {
             const ownerJson = await ownerRes.json();
             if (ownerJson.success) {
                 setOwners(ownerJson.data);
-            }
-
-            const objRes = await fetch('/api/objects');
-            const objJson = await objRes.json();
-            if (objJson.success) {
-                setObjects(objJson.data);
             }
         } catch (error) {
             console.error("Mulkdorlarni yuklashda xatolik:", error);
@@ -292,7 +279,8 @@ export default function OwnersPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredOwners.map(owner => {
-                        const ownerObjects = objects.filter(o => o.ownerId === owner.id);
+                        const ownerObjectsCount = owner.objectsCount ?? 0;
+                        const ownerObjects = owner.objects ?? [];
                         return (
                             <div key={owner.id} className="glass-card bg-white border border-gray-100 shadow-sm rounded-3xl p-6 hover:shadow-lg transition-all flex flex-col justify-between space-y-6">
                                 <div className="space-y-4">
@@ -302,7 +290,7 @@ export default function OwnersPage() {
                                                 <User className="w-6 h-6" />
                                             </div>
                                             <div>
-                                                <h3 className="font-bold text-gray-900 text-lg font-outfit leading-tight">{owner.name}</h3>
+                                                <h3 className="font-bold text-gray-950 text-lg font-outfit leading-tight">{owner.name}</h3>
                                                 <span className="text-[10px] text-gray-400 font-medium">
                                                     Qo'shilgan sana: {new Date(owner.createdAt).toLocaleDateString()}
                                                 </span>
@@ -318,7 +306,7 @@ export default function OwnersPage() {
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(owner.id)}
-                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
                                                 title="O'chirish"
                                             >
                                                 <Trash2 className="w-4.5 h-4.5" />
@@ -362,21 +350,21 @@ export default function OwnersPage() {
                                             Mulklar soni:
                                         </span>
                                         <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-sm">
-                                            {ownerObjects.length} ta
+                                            {ownerObjectsCount} ta
                                         </span>
                                     </div>
 
-                                    {ownerObjects.length > 0 && (
+                                    {ownerObjectsCount > 0 && (
                                         <div className="space-y-1">
-                                            {ownerObjects.slice(0, 2).map(o => (
+                                            {ownerObjects.map(o => (
                                                 <div key={o.id} className="flex justify-between items-center text-xs p-2 bg-gray-50/50 rounded-xl border border-gray-100">
                                                     <span className="text-gray-600 font-medium truncate max-w-[150px]">{o.name}</span>
                                                     <span className="font-black text-gray-900">${o.price}/oy</span>
                                                 </div>
                                             ))}
-                                            {ownerObjects.length > 2 && (
+                                            {ownerObjectsCount > 2 && (
                                                 <p className="text-[10px] text-center text-gray-400 font-bold">
-                                                    + yana {ownerObjects.length - 2} ta mulk...
+                                                    + yana {ownerObjectsCount - 2} ta mulk...
                                                 </p>
                                             )}
                                         </div>

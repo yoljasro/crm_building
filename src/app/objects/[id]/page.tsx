@@ -20,7 +20,8 @@ import {
     Edit2,
     Info,
     Calendar,
-    Save
+    Save,
+    X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -62,13 +63,27 @@ export default function PropertyDetailsPage() {
     const [newStatus, setNewStatus] = useState<"bo'sh" | "band" | "bo'shaydi" | "arxiv">("bo'sh");
     const [selectedImage, setSelectedImage] = useState<string>('');
 
+    // Telegram share modal states
+    const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
+    const [telegramChatId, setTelegramChatId] = useState("");
+    const [isSendingTelegram, setIsSendingTelegram] = useState(false);
+
+    // Load saved Telegram Chat ID from localStorage
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('crm_tg_chat_id');
+            if (saved) setTelegramChatId(saved);
+            else setTelegramChatId('@rent_crm_operator');
+        }
+    }, []);
+
     const fetchDetails = async () => {
         setIsLoading(true);
         try {
-            const objRes = await fetch('/api/objects');
+            const objRes = await fetch(`/api/objects?id=${params.id}`);
             const objJson = await objRes.json();
             if (objJson.success) {
-                const foundObj = objJson.data.find((o: any) => o.id === params.id);
+                const foundObj = objJson.data;
                 if (foundObj) {
                     setObject(foundObj);
                     setNewStatus(foundObj.status);
@@ -93,6 +108,77 @@ export default function PropertyDetailsPage() {
     useEffect(() => {
         fetchDetails();
     }, [params.id]);
+
+    const handleSendDirectTelegram = async () => {
+        if (!object) return;
+        if (!telegramChatId) {
+            alert("Iltimos, Telegram chat ID yoki guruh usernamini kiriting!");
+            return;
+        }
+        setIsSendingTelegram(true);
+        try {
+            const res = await fetch('/api/telegram/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    objectIds: [object.id],
+                    chatId: telegramChatId
+                })
+            });
+            const json = await res.json();
+            if (json.success) {
+                alert("Muvaffaqiyatli yuborildi! ✅");
+                localStorage.setItem('crm_tg_chat_id', telegramChatId);
+                setIsTelegramModalOpen(false);
+            } else {
+                alert("Xatolik yuz berdi: " + json.error);
+            }
+        } catch (error) {
+            console.error("Telegramga yuborishda xatolik:", error);
+            alert("Tizim xatosi!");
+        } finally {
+            setIsSendingTelegram(false);
+        }
+    };
+
+    const handleShareTelegramLink = () => {
+        if (!object) return;
+        try {
+            const cleanDesc = object.description
+                ? object.description
+                    .replace(/\+?998[\s-]?\(?\d{2}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/g, '')
+                    .replace(/(?:tel|phone|номер|тел|алоqa|контакты)[\s:]*\+?\d[\s\d-]{7,15}/gi, '')
+                    .replace(/t\.me\/\/\+?998\d+/g, '')
+                    .trim()
+                : "";
+
+            const header = `🏢 IJARA / АРЕНДА KVARTIRA`;
+            const specs = `
+📍 Tuman (Район): ${object.district}
+🛣 Manzil: ${object.address}
+🛏 Xonalar soni: ${object.rooms} xona
+📐 Maydoni (Площадь): ${object.area} m²
+🏢 Qavati: ${object.floor}
+🛠 Ta'miri (Ремонт): ${object.repair}
+💵 Oylik to'lov (Цена): $${(object.price ?? 0).toLocaleString()} / oy
+`;
+            const text = `🏢 *${header}* 🏢
+${specs}
+📝 *Tavsif:* ${cleanDesc || "Barcha sharoitlarga ega shinam xonadon ijaraga beriladi."}
+
+📞 *Aloqa (Контакты):* +998 90 123 45 67 (CRM Operator)
+✍️ *Telegram:* @rent_crm_operator
+🔗 *Batafsil ma'lumot:* ${window.location.origin}/objects/${object.id}
+#ijara #tashkent #apartment #${object.district.replace(/\s+/g, '').toLowerCase()}`;
+
+            const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(text)}`;
+            window.open(shareUrl, '_blank');
+            localStorage.setItem('crm_tg_chat_id', telegramChatId);
+            setIsTelegramModalOpen(false);
+        } catch (error) {
+            console.error("Ssilka tayyorlashda xatolik:", error);
+        }
+    };
 
     const handleSaveStatus = async () => {
         if (!object) return;
@@ -236,7 +322,11 @@ Telegram: @rent_crm_operator`;
                     <span className="font-bold text-sm">Orqaga qaytish</span>
                 </button>
                 <div className="flex items-center gap-3">
-                    <button className="p-2.5 bg-white rounded-2xl border border-gray-100 hover:bg-gray-50 transition-colors text-gray-400">
+                    <button 
+                        onClick={() => setIsTelegramModalOpen(true)}
+                        className="p-2.5 bg-white rounded-2xl border border-gray-100 hover:bg-gray-50 transition-colors text-blue-600 cursor-pointer shadow-sm hover:border-blue-200"
+                        title="Telegramda ulashish"
+                    >
                         <Share2 className="w-5 h-5" />
                     </button>
                     <button className="p-2.5 bg-white rounded-2xl border border-gray-100 hover:bg-gray-50 transition-colors text-gray-400">
@@ -496,6 +586,67 @@ Telegram: @rent_crm_operator`;
                     </div>
                 </div>
             </div>
+            {/* Telegram Share Modal */}
+            {isTelegramModalOpen && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 my-8">
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                            <h2 className="text-xl font-bold text-gray-900 font-outfit flex items-center gap-2">
+                                <Send className="w-5 h-5 text-blue-600 animate-pulse" />
+                                Telegramda ulashish
+                            </h2>
+                            <button
+                                onClick={() => setIsTelegramModalOpen(false)}
+                                className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all font-bold"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block text-gray-600">
+                                    Telegram Chat/Kanal ID yoki Username
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Masalan: @rent_crm_operator yoki -100..."
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-mono"
+                                    value={telegramChatId}
+                                    onChange={(e) => setTelegramChatId(e.target.value)}
+                                />
+                                <span className="text-[10px] text-gray-400 block mt-1 leading-normal">
+                                    Mijoz chat ID'sini kiritishingiz mumkin (agar u botni ishga tushirgan bo'lsa), yoki guruh/kanal username'ini.
+                                </span>
+                            </div>
+
+                            <div className="flex flex-col gap-3 pt-2">
+                                <button
+                                    onClick={handleSendDirectTelegram}
+                                    disabled={isSendingTelegram}
+                                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-97 disabled:opacity-50 text-xs shadow-lg shadow-blue-600/20 cursor-pointer"
+                                >
+                                    {isSendingTelegram ? (
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <Send className="w-4 h-4" />
+                                    )}
+                                    Bot orqali rasmlar bilan to'g'ridan-to'g'ri yuborish
+                                </button>
+
+                                <button
+                                    onClick={handleShareTelegramLink}
+                                    disabled={isSendingTelegram}
+                                    className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-97 disabled:opacity-50 text-xs cursor-pointer"
+                                >
+                                    <Share2 className="w-4 h-4 text-blue-600" />
+                                    Share Link (Ssilka orqali yuborish)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -57,7 +57,9 @@ const districts = ["Barchasi", "Mirabad", "Yakkasaray", "Tashkent City", "Shaykh
 
 export default function ObjectsPage() {
     // API data states
+    // API data states
     const [objects, setObjects] = useState<RentalObject[]>([]);
+    const [totalObjectsCount, setTotalObjectsCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 20;
 
@@ -79,6 +81,7 @@ export default function ObjectsPage() {
 
     // Filter states
     const [selectedDistrict, setSelectedDistrict] = useState("Barchasi");
+    const [localSearchQuery, setLocalSearchQuery] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [appliedFilters, setAppliedFilters] = useState({
@@ -90,8 +93,32 @@ export default function ObjectsPage() {
         status: "Barchasi"
     });
 
+    // Telegram share modal states
+    const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
+    const [telegramChatId, setTelegramChatId] = useState("");
+    const [isSendingTelegram, setIsSendingTelegram] = useState(false);
+
+    // Load saved Telegram Chat ID from localStorage
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('crm_tg_chat_id');
+            if (saved) setTelegramChatId(saved);
+            else setTelegramChatId('@rent_crm_operator');
+        }
+    }, []);
+
     // Reset page when filters change
-    useEffect(() => { setCurrentPage(1); }, [selectedDistrict, searchQuery, appliedFilters]);
+    useEffect(() => { 
+        setCurrentPage(1); 
+    }, [selectedDistrict, searchQuery, appliedFilters]);
+
+    // Debounce search query
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setSearchQuery(localSearchQuery);
+        }, 400);
+        return () => clearTimeout(handler);
+    }, [localSearchQuery]);
 
     // Form inputs for modal filters
     const [filterForm, setFilterForm] = useState({
@@ -124,18 +151,34 @@ export default function ObjectsPage() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const objRes = await fetch('/api/objects');
+            const queryParams = new URLSearchParams({
+                page: String(currentPage),
+                limit: String(pageSize),
+                district: selectedDistrict,
+                search: searchQuery,
+                priceMin: appliedFilters.priceMin,
+                priceMax: appliedFilters.priceMax,
+                rooms: appliedFilters.rooms,
+                areaMin: appliedFilters.areaMin,
+                areaMax: appliedFilters.areaMax,
+                status: appliedFilters.status
+            });
+
+            const objRes = await fetch(`/api/objects?${queryParams.toString()}`);
             const objJson = await objRes.json();
             if (objJson.success) {
                 setObjects(objJson.data);
+                setTotalObjectsCount(objJson.total);
             }
 
-            const ownerRes = await fetch('/api/owners');
-            const ownerJson = await ownerRes.json();
-            if (ownerJson.success) {
-                setOwners(ownerJson.data);
-                if (ownerJson.data.length > 0) {
-                    setAddObjectForm(prev => ({ ...prev, ownerId: ownerJson.data[0].id }));
+            if (owners.length === 0) {
+                const ownerRes = await fetch('/api/owners');
+                const ownerJson = await ownerRes.json();
+                if (ownerJson.success) {
+                    setOwners(ownerJson.data);
+                    if (ownerJson.data.length > 0) {
+                        setAddObjectForm(prev => ({ ...prev, ownerId: ownerJson.data[0].id }));
+                    }
                 }
             }
         } catch (error) {
@@ -147,66 +190,9 @@ export default function ObjectsPage() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [currentPage, selectedDistrict, searchQuery, appliedFilters]);
 
-    // Filter logic
-    const filteredObjects = objects.filter(obj => {
-        // District filter - handles case-insensitivity and substring/English-Uzbek variants
-        let matchesDistrict = false;
-        if (selectedDistrict === "Barchasi") {
-            matchesDistrict = true;
-        } else {
-            const objDist = (obj.district || "").toLowerCase().trim();
-            const selDist = selectedDistrict.toLowerCase().trim();
-            
-            // Masalan: "Mirabad" va "Мирабадский", "Yakkasaray" va "Яккасарайский"
-            if (selDist === "mirabad" && (objDist.includes("mirabad") || objDist.includes("мирабад"))) {
-                matchesDistrict = true;
-            } else if (selDist === "yakkasaray" && (objDist.includes("yakkasaray") || objDist.includes("яккасарай"))) {
-                matchesDistrict = true;
-            } else if (selDist === "tashkent city" && (objDist.includes("tashkent city") || objDist.includes("ташкент сити") || objDist.includes("city"))) {
-                matchesDistrict = true;
-            } else if (selDist === "shaykhantakhur" && (objDist.includes("shaykhantakhur") || objDist.includes("шайхантахур") || objDist.includes("shayxontohur"))) {
-                matchesDistrict = true;
-            } else if (selDist === "yunusabad" && (objDist.includes("yunusabad") || objDist.includes("юнусабад"))) {
-                matchesDistrict = true;
-            } else if (selDist === "chilanzar" && (objDist.includes("chilanzar") || objDist.includes("чиланзар"))) {
-                matchesDistrict = true;
-            } else if (selDist === "mirzo ulugbek" && (objDist.includes("mirzo") || objDist.includes("мирзо") || objDist.includes("улугбек") || objDist.includes("ulugbek"))) {
-                matchesDistrict = true;
-            } else {
-                matchesDistrict = objDist.includes(selDist);
-            }
-        }
-
-        // Search query filter (name, address, description, district)
-        const matchesSearch = (obj.name?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
-            (obj.address?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
-            (obj.district?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
-            (obj.description?.toLowerCase() ?? "").includes(searchQuery.toLowerCase());
-
-        // Price Min filter
-        const matchesPriceMin = appliedFilters.priceMin === "" || obj.price >= Number(appliedFilters.priceMin);
-
-        // Price Max filter
-        const matchesPriceMax = appliedFilters.priceMax === "" || obj.price <= Number(appliedFilters.priceMax);
-
-        // Rooms filter
-        const matchesRooms = appliedFilters.rooms === "" || obj.rooms === Number(appliedFilters.rooms);
-
-        // Area Min filter
-        const matchesAreaMin = appliedFilters.areaMin === "" || obj.area >= Number(appliedFilters.areaMin);
-
-        // Area Max filter
-        const matchesAreaMax = appliedFilters.areaMax === "" || obj.area <= Number(appliedFilters.areaMax);
-
-        // Status filter
-        const matchesStatus = appliedFilters.status === "Barchasi" || obj.status === appliedFilters.status;
-
-        return matchesDistrict && matchesSearch && matchesPriceMin && matchesPriceMax && matchesRooms && matchesAreaMin && matchesAreaMax && matchesStatus;
-    });
-
-    const paginatedObjects = filteredObjects.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const paginatedObjects = objects;
 
     // Add new object submission
     const handleAddObject = async (e: React.FormEvent) => {
@@ -224,10 +210,8 @@ export default function ObjectsPage() {
             });
             const json = await res.json();
             if (json.success) {
-                // Refresh list and close modal
                 await fetchData();
                 setIsAddModalOpen(false);
-                // Reset form
                 setAddObjectForm({
                     name: "",
                     district: "Mirabad",
@@ -270,6 +254,7 @@ export default function ObjectsPage() {
         setFilterForm(cleared);
         setAppliedFilters(cleared);
         setSelectedDistrict("Barchasi");
+        setLocalSearchQuery("");
         setSearchQuery("");
     };
 
@@ -284,29 +269,88 @@ export default function ObjectsPage() {
 
     const handleShareTelegram = () => {
         if (selectedIds.length === 0) return;
+        setIsTelegramModalOpen(true);
+    };
 
-        const selectedObjects = objects.filter(o => selectedIds.includes(o.id));
-        
-        let text = `🏢 *Ijara Obyektlari bo'yicha takliflar:*\n\n`;
-        
-        selectedObjects.forEach((obj, idx) => {
-            const statusDetails = getStatusDetails(obj.status);
-            text += `${idx + 1}️⃣ *${obj.name}*\n`;
-            text += `📍 Manzil: ${obj.address}, ${obj.district}\n`;
-            text += `💵 Ijara narxi: $${(obj.price ?? 0).toLocaleString()} / oy\n`;
-            text += `📐 Maydoni: ${obj.area} m² | 🚪 Xonalar: ${obj.rooms} xona | 🏢 Qavati: ${obj.floor}\n`;
-            text += `🔧 Ta'mirlanishi: ${obj.repair}\n`;
-            text += `ℹ️ Status: ${statusDetails.label}\n`;
-            if (obj.description) {
-                const desc = obj.description.length > 150 ? obj.description.substring(0, 150) + "..." : obj.description;
-                text += `📝 Tavsif: ${desc}\n`;
+    const handleSendDirectTelegram = async () => {
+        if (!telegramChatId) {
+            alert("Iltimos, Telegram chat ID yoki guruh usernamini kiriting!");
+            return;
+        }
+        setIsSendingTelegram(true);
+        try {
+            const res = await fetch('/api/telegram/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    objectIds: selectedIds,
+                    chatId: telegramChatId
+                })
+            });
+            const json = await res.json();
+            if (json.success) {
+                alert("Muvaffaqiyatli yuborildi! ✅");
+                localStorage.setItem('crm_tg_chat_id', telegramChatId);
+                setIsTelegramModalOpen(false);
+                setSelectedIds([]);
+            } else {
+                alert("Xatolik yuz berdi: " + json.error);
             }
-            text += `🔗 Batafsil ma'lumot: ${window.location.origin}/objects/${obj.id}\n\n`;
-        });
+        } catch (error) {
+            console.error("Telegramga yuborishda xatolik:", error);
+            alert("Tizim xatosi!");
+        } finally {
+            setIsSendingTelegram(false);
+        }
+    };
 
-        // Set url parameter to window.location.origin to prevent redirecting to telegram.org
-        const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(text)}`;
-        window.open(shareUrl, '_blank');
+    const handleShareTelegramLink = async () => {
+        try {
+            setIsSendingTelegram(true);
+            const res = await fetch(`/api/objects?ids=${selectedIds.join(',')}`);
+            const json = await res.json();
+            if (!json.success) {
+                alert("Ma'lumotlarni yuklab bo'lmadi: " + json.error);
+                return;
+            }
+
+            const selectedObjects: RentalObject[] = json.data;
+            let text = `🏢 *Ijara Obyektlari bo'yicha takliflar:*\n\n`;
+            
+            selectedObjects.forEach((obj, idx) => {
+                const statusDetails = getStatusDetails(obj.status);
+                const cleanDesc = obj.description
+                    ? obj.description
+                        .replace(/\+?998[\s-]?\(?\d{2}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/g, '')
+                        .replace(/(?:tel|phone|номер|тел|алоqa|контакты)[\s:]*\+?\d[\s\d-]{7,15}/gi, '')
+                        .replace(/t\.me\/\/\+?998\d+/g, '')
+                        .trim()
+                    : "";
+                
+                text += `${idx + 1}️⃣ *${obj.name}*\n`;
+                text += `📍 Manzil: ${obj.address}, ${obj.district}\n`;
+                text += `💵 Ijara narxi: $${(obj.price ?? 0).toLocaleString()} / oy\n`;
+                text += `📐 Maydoni: ${obj.area} m² | 🚪 Xonalar: ${obj.rooms} xona | 🏢 Qavati: ${obj.floor}\n`;
+                text += `🔧 Ta'mirlanishi: ${obj.repair}\n`;
+                text += `ℹ️ Status: ${statusDetails.label}\n`;
+                if (cleanDesc) {
+                    const desc = cleanDesc.length > 150 ? cleanDesc.substring(0, 150) + "..." : cleanDesc;
+                    text += `📝 Tavsif: ${desc}\n`;
+                }
+                text += `🔗 Batafsil ma'lumot: ${window.location.origin}/objects/${obj.id}\n\n`;
+            });
+
+            const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(text)}`;
+            window.open(shareUrl, '_blank');
+            localStorage.setItem('crm_tg_chat_id', telegramChatId);
+            setIsTelegramModalOpen(false);
+            setSelectedIds([]);
+        } catch (error) {
+            console.error("Ssilka tayyorlashda xatolik:", error);
+            alert("Tizim xatosi!");
+        } finally {
+            setIsSendingTelegram(false);
+        }
     };
 
     // Status Helper
@@ -734,19 +778,19 @@ export default function ObjectsPage() {
                             type="text"
                             placeholder="Nomi, ko'cha yoki manzil bo'yicha tezkor qidiruv..."
                             className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3 pl-11 pr-4 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            value={localSearchQuery}
+                            onChange={(e) => setLocalSearchQuery(e.target.value)}
                         />
                     </div>
                     <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                        {filteredObjects.length > 0 && (
+                        {objects.length > 0 && (
                             <button
                                 type="button"
                                 onClick={() => {
-                                    if (selectedIds.length === filteredObjects.length) {
+                                    if (selectedIds.length === objects.length) {
                                         setSelectedIds([]);
                                     } else {
-                                        setSelectedIds(filteredObjects.map(o => o.id));
+                                        setSelectedIds(objects.map(o => o.id));
                                     }
                                 }}
                                 className={cn(
@@ -757,7 +801,7 @@ export default function ObjectsPage() {
                                 )}
                             >
                                 <Share2 className="w-4 h-4 text-blue-600" />
-                                {selectedIds.length === filteredObjects.length
+                                {selectedIds.length === objects.length
                                     ? "Tanlovni bekor qilish"
                                     : "Barchasini tanlash"}
                             </button>
@@ -905,7 +949,7 @@ export default function ObjectsPage() {
                         </table>
                     </div>
                     
-                    {filteredObjects.length === 0 && (
+                    {totalObjectsCount === 0 && (
                         <div className="flex flex-col items-center justify-center py-20 bg-white border-t border-dashed border-gray-200">
                             <Building2 className="w-12 h-12 text-gray-300 mb-3" />
                             <p className="text-gray-500 font-bold tracking-tight text-sm">Ushbu filtrlar bo'yicha hech qanday obyekt topilmadi</p>
@@ -919,7 +963,7 @@ export default function ObjectsPage() {
                     )}
                     
                     <div className="p-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 font-bold">
-                        <span>Jami {filteredObjects.length} ta obyekt ko'rsatilmoqda</span>
+                        <span>Jami {totalObjectsCount} ta obyekt topildi</span>
                         <div className="flex items-center gap-4">
                             <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black mr-2">Rent CRM</span>
                             {/* Pagination Controls */}
@@ -932,10 +976,10 @@ export default function ObjectsPage() {
                                     <ChevronLeft className="w-3.5 h-3.5" />
                                     Oldingi
                                 </button>
-                                <span className="text-sm px-2 text-gray-700">{currentPage} / {Math.max(1, Math.ceil(filteredObjects.length / pageSize))}</span>
+                                <span className="text-sm px-2 text-gray-700">{currentPage} / {Math.max(1, Math.ceil(totalObjectsCount / pageSize))}</span>
                                 <button 
-                                    onClick={() => setCurrentPage(p => Math.min(p+1, Math.ceil(filteredObjects.length / pageSize)))} 
-                                    disabled={currentPage===Math.ceil(filteredObjects.length / pageSize) || filteredObjects.length === 0} 
+                                    onClick={() => setCurrentPage(p => Math.min(p+1, Math.ceil(totalObjectsCount / pageSize)))} 
+                                    disabled={currentPage===Math.ceil(totalObjectsCount / pageSize) || totalObjectsCount === 0} 
                                     className="px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-700 disabled:opacity-50 hover:bg-gray-50 transition-colors disabled:hover:bg-white flex items-center gap-1 cursor-pointer"
                                 >
                                     Keyingi
@@ -1017,6 +1061,68 @@ export default function ObjectsPage() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Telegram Share Modal */}
+            {isTelegramModalOpen && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 my-8">
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                            <h2 className="text-xl font-bold text-gray-900 font-outfit flex items-center gap-2">
+                                <Send className="w-5 h-5 text-blue-600 animate-pulse" />
+                                Telegramda ulashish
+                            </h2>
+                            <button
+                                onClick={() => setIsTelegramModalOpen(false)}
+                                className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all font-bold"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block text-gray-600">
+                                    Telegram Chat/Kanal ID yoki Username
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Masalan: @rent_crm_operator yoki -100..."
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-mono"
+                                    value={telegramChatId}
+                                    onChange={(e) => setTelegramChatId(e.target.value)}
+                                />
+                                <span className="text-[10px] text-gray-400 block mt-1 leading-normal">
+                                    Mijoz chat ID'sini kiritishingiz mumkin (agar u botni ishga tushirgan bo'lsa), yoki guruh/kanal username'ini.
+                                </span>
+                            </div>
+
+                            <div className="flex flex-col gap-3 pt-2">
+                                <button
+                                    onClick={handleSendDirectTelegram}
+                                    disabled={isSendingTelegram}
+                                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-97 disabled:opacity-50 text-xs shadow-lg shadow-blue-600/20 cursor-pointer"
+                                >
+                                    {isSendingTelegram ? (
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <Send className="w-4 h-4" />
+                                    )}
+                                    Bot orqali rasmlar bilan to'g'ridan-to'g'ri yuborish
+                                </button>
+
+                                <button
+                                    onClick={handleShareTelegramLink}
+                                    disabled={isSendingTelegram}
+                                    className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-97 disabled:opacity-50 text-xs cursor-pointer"
+                                >
+                                    <Share2 className="w-4 h-4 text-blue-600" />
+                                    Share Link (Ssilka orqali yuborish)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

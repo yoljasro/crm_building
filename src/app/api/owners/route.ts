@@ -4,7 +4,15 @@ import { readDB, writeDB, Owner } from '@/lib/db';
 export async function GET() {
   try {
     const db = readDB();
-    return NextResponse.json({ success: true, data: db.owners });
+    const ownersWithStats = db.owners.map(owner => {
+      const ownerObjects = db.objects.filter(obj => obj.ownerId === owner.id);
+      return {
+        ...owner,
+        objectsCount: ownerObjects.length,
+        objects: ownerObjects.slice(0, 2).map(o => ({ id: o.id, name: o.name, price: o.price }))
+      };
+    });
+    return NextResponse.json({ success: true, data: ownersWithStats });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
