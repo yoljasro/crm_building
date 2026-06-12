@@ -76,8 +76,8 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Limit to 10 photos
-      const finalImages = imageUrls.slice(0, 10);
+      // Limit to 10 unique photos
+      const finalImages = Array.from(new Set(imageUrls)).slice(0, 10);
 
       // Prepare description/caption text
       const cleanDesc = stripPhonesAndContacts(obj.description);
@@ -148,10 +148,10 @@ export async function POST(req: NextRequest) {
 
     const failed = results.filter(r => !r.success);
     if (failed.length > 0) {
+      const desc = failed[0].response?.description || "Noma'lum Telegram xatoligi";
       return NextResponse.json({
         success: false,
-        error: "Ba'zi obyektlarni yuborib bo'lmadi",
-        results
+        error: `Telegram xatosi: "${desc}". Bot (@crm_building_bot) ushbu chat/guruhga qo'shilganligini, admin huquqlari berilganligini yoki chat manzili to'g'riligini tekshiring.`
       }, { status: 500 });
     }
 
