@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     }
 
     const db = readDB();
-    const origin = req.nextUrl.origin || "http://159.223.105.135:3000";
+    const origin = req.nextUrl.origin || "http://159.223.105.135";
 
     const results = [];
 

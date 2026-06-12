@@ -269,39 +269,18 @@ export default function ObjectsPage() {
 
     const handleShareTelegram = () => {
         if (selectedIds.length === 0) return;
-        setIsTelegramModalOpen(true);
-    };
-
-    const handleSendDirectTelegram = async () => {
-        if (!telegramChatId) {
-            alert("Iltimos, Telegram chat ID yoki guruh usernamini kiriting!");
+        
+        if (selectedIds.length > 4) {
+            alert("Bot orqali ulashishda bir vaqtning o'zida ko'pi bilan 4 ta uyni tanlash mumkin. Iltimos, ro'yxatni qisqartiring.");
             return;
         }
-        setIsSendingTelegram(true);
-        try {
-            const res = await fetch('/api/telegram/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    objectIds: selectedIds,
-                    chatId: telegramChatId
-                })
-            });
-            const json = await res.json();
-            if (json.success) {
-                alert("Muvaffaqiyatli yuborildi! ✅");
-                localStorage.setItem('crm_tg_chat_id', telegramChatId);
-                setIsTelegramModalOpen(false);
-                setSelectedIds([]);
-            } else {
-                alert("Xatolik yuz berdi: " + json.error);
-            }
-        } catch (error) {
-            console.error("Telegramga yuborishda xatolik:", error);
-            alert("Tizim xatosi!");
-        } finally {
-            setIsSendingTelegram(false);
-        }
+
+        // Redirect to Telegram bot
+        const payload = selectedIds.join('-');
+        const url = `https://t.me/crm_building_bot?start=${payload}`;
+        window.open(url, '_blank');
+        
+        setSelectedIds([]);
     };
 
     const handleShareTelegramLink = async () => {
@@ -1063,67 +1042,7 @@ export default function ObjectsPage() {
               </div>
             )}
 
-            {/* Telegram Share Modal */}
-            {isTelegramModalOpen && (
-                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-                    <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 my-8">
-                        <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
-                            <h2 className="text-xl font-bold text-gray-900 font-outfit flex items-center gap-2">
-                                <Send className="w-5 h-5 text-blue-600 animate-pulse" />
-                                Telegramda ulashish
-                            </h2>
-                            <button
-                                onClick={() => setIsTelegramModalOpen(false)}
-                                className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all font-bold"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
 
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block text-gray-600">
-                                    Telegram Chat/Kanal ID yoki Username
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Masalan: @rent_crm_operator yoki -100..."
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-mono"
-                                    value={telegramChatId}
-                                    onChange={(e) => setTelegramChatId(e.target.value)}
-                                />
-                                <span className="text-[10px] text-gray-400 block mt-1 leading-normal">
-                                    Mijoz chat ID'sini kiritishingiz mumkin (agar u botni ishga tushirgan bo'lsa), yoki guruh/kanal username'ini.
-                                </span>
-                            </div>
-
-                            <div className="flex flex-col gap-3 pt-2">
-                                <button
-                                    onClick={handleSendDirectTelegram}
-                                    disabled={isSendingTelegram}
-                                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-97 disabled:opacity-50 text-xs shadow-lg shadow-blue-600/20 cursor-pointer"
-                                >
-                                    {isSendingTelegram ? (
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    ) : (
-                                        <Send className="w-4 h-4" />
-                                    )}
-                                    Bot orqali rasmlar bilan to'g'ridan-to'g'ri yuborish
-                                </button>
-
-                                <button
-                                    onClick={handleShareTelegramLink}
-                                    disabled={isSendingTelegram}
-                                    className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-97 disabled:opacity-50 text-xs cursor-pointer"
-                                >
-                                    <Share2 className="w-4 h-4 text-blue-600" />
-                                    Share Link (Ssilka orqali yuborish)
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
